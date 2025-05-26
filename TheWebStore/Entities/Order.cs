@@ -25,7 +25,7 @@ public partial class Order
     public DateTime? DeliveredDate { get; set; }
 
     public Carrier? Carrier { get; set; }
-}
+
 
     public virtual Address BillingAddress { get; set; } = null!;
 
