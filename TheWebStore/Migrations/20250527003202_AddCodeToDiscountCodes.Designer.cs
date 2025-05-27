@@ -12,8 +12,8 @@ using WebStore.Entities;
 namespace TheWebStore.Migrations
 {
     [DbContext(typeof(WebStoreContext))]
-    [Migration("20250526201806_InitialBaseline")]
-    partial class InitialBaseline
+    [Migration("20250527003202_AddCodeToDiscountCodes")]
+    partial class AddCodeToDiscountCodes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,7 +23,31 @@ namespace TheWebStore.Migrations
                 .HasAnnotation("ProductVersion", "9.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "discount_type", new[] { "percentage", "flat" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Carrier", b =>
+                {
+                    b.Property<int>("CarrierId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CarrierId"));
+
+                    b.Property<string>("CarrierName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactUrl")
+                        .HasColumnType("text");
+
+                    b.HasKey("CarrierId");
+
+                    b.ToTable("Carrier");
+                });
 
             modelBuilder.Entity("ProductCategory", b =>
                 {
@@ -167,6 +191,42 @@ namespace TheWebStore.Migrations
                     b.ToTable("customers", (string)null);
                 });
 
+            modelBuilder.Entity("WebStore.Entities.DiscountCode", b =>
+                {
+                    b.Property<int>("DiscountCodeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DiscountCodeId"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DiscountType")
+                        .HasColumnType("discount_type");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("ExpirationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("MaxUsage")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TimesUsed")
+                        .HasColumnType("integer");
+
+                    b.HasKey("DiscountCodeId");
+
+                    b.ToTable("discount_codes", (string)null);
+                });
+
             modelBuilder.Entity("WebStore.Entities.Order", b =>
                 {
                     b.Property<int>("OrderId")
@@ -180,9 +240,18 @@ namespace TheWebStore.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("billing_address_id");
 
+                    b.Property<int?>("CarrierId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer")
                         .HasColumnName("customer_id");
+
+                    b.Property<DateTime?>("DeliveredDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DiscountCodeId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("OrderDate")
                         .HasColumnType("timestamp without time zone")
@@ -193,16 +262,26 @@ namespace TheWebStore.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("order_status");
 
+                    b.Property<DateTime?>("ShippedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ShippingAddressId")
                         .HasColumnType("integer")
                         .HasColumnName("shipping_address_id");
+
+                    b.Property<string>("TrackingNumber")
+                        .HasColumnType("text");
 
                     b.HasKey("OrderId")
                         .HasName("orders_pkey");
 
                     b.HasIndex("BillingAddressId");
 
+                    b.HasIndex("CarrierId");
+
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("DiscountCodeId");
 
                     b.HasIndex("ShippingAddressId");
 
@@ -452,12 +531,21 @@ namespace TheWebStore.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_orders_billing_address");
 
+                    b.HasOne("Carrier", "Carrier")
+                        .WithMany("Orders")
+                        .HasForeignKey("CarrierId");
+
                     b.HasOne("WebStore.Entities.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_orders_customer");
+
+                    b.HasOne("WebStore.Entities.DiscountCode", "DiscountCode")
+                        .WithMany("Orders")
+                        .HasForeignKey("DiscountCodeId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("WebStore.Entities.Address", "ShippingAddress")
                         .WithMany("OrderShippingAddresses")
@@ -468,7 +556,11 @@ namespace TheWebStore.Migrations
 
                     b.Navigation("BillingAddress");
 
+                    b.Navigation("Carrier");
+
                     b.Navigation("Customer");
+
+                    b.Navigation("DiscountCode");
 
                     b.Navigation("ShippingAddress");
                 });
@@ -527,6 +619,11 @@ namespace TheWebStore.Migrations
                     b.Navigation("Store");
                 });
 
+            modelBuilder.Entity("Carrier", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
             modelBuilder.Entity("WebStore.Entities.Address", b =>
                 {
                     b.Navigation("OrderBillingAddresses");
@@ -543,6 +640,11 @@ namespace TheWebStore.Migrations
                 {
                     b.Navigation("Addresses");
 
+                    b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("WebStore.Entities.DiscountCode", b =>
+                {
                     b.Navigation("Orders");
                 });
 

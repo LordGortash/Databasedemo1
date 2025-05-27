@@ -1,11 +1,15 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WebStore.Assignments;
 using WebStore.Entities;
 
 namespace WebStore
 {
     class Program
+
     {
+
+
+
         static async Task Main(string[] args)
         {
 
@@ -39,4 +43,5 @@ namespace WebStore
             Console.ReadKey();
         }
     }
+
 }
